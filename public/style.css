@@ -76,9 +76,15 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
 .section-head { display: flex; align-items: center; gap: 12px; }
 .section-head.spread { flex-wrap: wrap; justify-content: space-between; }
 .section h2 { margin: 0; font-family: var(--pixel); font-size: 14px; }
-.split { display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; }
-.air { flex: 1 1 340px; }
-.lights { flex: 999 1 560px; }
+.board {
+  display: grid; gap: 32px; align-items: start;
+  grid-template-columns: minmax(300px, 1fr) minmax(0, 2.4fr);
+  grid-template-areas: "climate climate" "air lights";
+}
+.board.no-air { grid-template-areas: "climate climate" "lights lights"; }
+.climate { grid-area: climate; }
+.air { grid-area: air; }
+.lights { grid-area: lights; }
 
 /* Climate */
 .climate-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 24px; }
@@ -143,3 +149,45 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
 .empty { color: var(--dim); }
 
 .foot { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; color: var(--dim); font-size: 18px; }
+
+/* Compact: tablets (Fire HD 8 landscape is ~960x600 CSS px). Same font sizes, tighter spacing,
+   climate and lights side by side so everything fits on one screen. */
+@media (max-width: 1100px) {
+  .screen { padding: 12px 12px 14px; }
+  .wrap { gap: 14px; }
+
+  .hud { padding: 10px 14px; gap: 12px; box-shadow: 0 -4px 0 0 var(--edge), 0 4px 0 0 var(--edge), -4px 0 0 0 var(--edge), 4px 0 0 0 var(--edge), 5px 7px 0 0 var(--shadow); }
+  .brand { gap: 12px; }
+  .brand svg { width: 32px; height: 32px; }
+  .brand-text { gap: 4px; }
+  .stats { gap: 8px; }
+  .stat { padding: 6px 10px; gap: 4px; min-width: 0; }
+
+  .board {
+    gap: 16px;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    grid-template-areas: "climate lights" "air lights";
+  }
+  .board.no-air { grid-template-areas: "climate lights"; }
+  .section { gap: 10px; }
+  .section-head { min-height: 44px; }
+
+  .climate-grid { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+  .card { padding: 10px 12px; gap: 8px; }
+  .meter { gap: 4px; }
+  .segs > div { height: 8px; }
+  .co2-list { gap: 14px; }
+  .co2-card { padding: 12px; }
+  .bars { height: 44px; padding: 4px; }
+
+  .btn-row { gap: 10px; }
+  .lights #lightsSub { display: none; }
+  .lights-grid { gap: 14px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .light { min-height: 0; padding: 10px 12px; gap: 6px; }
+  .light svg { width: 28px; height: 28px; }
+}
+
+/* Portrait tablets and phones: one column. */
+@media (max-width: 700px) {
+  .board, .board.no-air { grid-template-columns: minmax(0, 1fr); grid-template-areas: "climate" "air" "lights"; }
+}

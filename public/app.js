@@ -136,6 +136,7 @@ function renderClimate() {
 function renderCo2() {
   const entries = co2Entries();
   $('co2Section').hidden = !entries.length;
+  $('board').classList.toggle('no-air', !entries.length);
   $('co2').innerHTML = entries.map((e) => {
     const ppm = numeric(e.entity);
     const color = ppm == null ? C.dim : co2Color(ppm);
