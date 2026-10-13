@@ -323,7 +323,8 @@ async function toggleLight(id) {
 
 async function setAll(on) {
   const ids = lightEntries().map((e) => e.entity).filter((id) => states.has(id) && !OFFLINE.has(states.get(id).state));
-  const byDomain = Map.groupBy(ids, domainOf);
+  const byDomain = new Map();
+  for (const id of ids) byDomain.set(domainOf(id), [...(byDomain.get(domainOf(id)) || []), id]);
   for (const id of ids) states.set(id, { ...states.get(id), state: on ? 'on' : 'off' });
   renderLights();
   $('allOn').disabled = $('allOff').disabled = true;
