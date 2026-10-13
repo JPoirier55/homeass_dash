@@ -18,6 +18,7 @@ let co2History = new Map();
 let lightAreas = new Map();
 let lightKey = '';
 const pending = new Set();
+const actionStatus = new Map(); // entity → 'running' | 'done' | 'error'
 
 // ---------- API ----------
 
@@ -36,6 +37,7 @@ const callService = (domain, service, entityIds) =>
 
 // ---------- Entity selection (explicit config or auto-discovery) ----------
 
+const domainOf = (id) => id.split('.')[0];
 const attr = (id, key) => states.get(id)?.attributes?.[key];
 const friendly = (id) => attr(id, 'friendly_name') || id.split('.')[1].replace(/_/g, ' ');
 
@@ -178,15 +180,32 @@ const BULB = `
     <rect x="5" y="11" width="2" height="1" fill="#566c86"></rect>
   </svg>`;
 
+const SUN = `
+  <svg aria-hidden="true" width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges">
+    <path class="glass" d="M5 0h2v2h-2zM5 10h2v2h-2zM0 5h2v2h-2zM10 5h2v2h-2zM1 1h2v2h-2zM9 1h2v2h-2zM1 9h2v2h-2zM9 9h2v2h-2zM4 3h4v1h1v4h-1v1h-4v-1h-1v-4h1z"></path>
+    <rect class="shine" x="4" y="4" width="1" height="2"></rect>
+  </svg>`;
+
+// config.buttons: automations/scripts/scenes shown as tiles beside the lights.
+const ACTION_SERVICE = { automation: 'trigger', script: 'turn_on', scene: 'turn_on' };
+const buttonEntries = () => (Array.isArray(config.buttons) ? config.buttons : [])
+  .filter((b) => ACTION_SERVICE[domainOf(b.entity)]);
+
 function renderLights() {
   const entries = lightEntries();
-  $('lightsSection').hidden = !entries.length;
+  const buttons = buttonEntries();
+  $('lightsSection').hidden = !entries.length && !buttons.length;
 
-  // Rebuild buttons only when the set of lights changes, so focus survives polling.
-  const key = entries.map((e) => e.entity).join('|');
+  // Rebuild buttons only when the set of tiles changes, so focus survives polling.
+  const key = [...buttons, ...entries].map((e) => e.entity).join('|');
   if (key !== lightKey) {
     lightKey = key;
-    $('lights').innerHTML = entries.map((e) => `
+    $('lights').innerHTML = buttons.map((b) => `
+      <button type="button" class="light action" data-entity="${esc(b.entity)}">
+        <div class="light-top">${SUN}<span class="state">RUN</span></div>
+        <span class="name">${esc(upper(b.name || friendly(b.entity)))}</span>
+        <span class="room">${esc(upper(b.room ?? domainOf(b.entity)))}</span>
+      </button>`).join('') + entries.map((e) => `
       <button type="button" class="light" data-entity="${esc(e.entity)}" aria-pressed="false">
         <div class="light-top">${BULB}<span class="state">OFF</span></div>
         <span class="name">${esc(upper(e.name || friendly(e.entity)))}</span>
@@ -194,8 +213,19 @@ function renderLights() {
       </button>`).join('');
   }
 
+  for (const btn of $('lights').querySelectorAll('.action')) {
+    const s = states.get(btn.dataset.entity);
+    const status = actionStatus.get(btn.dataset.entity);
+    const offline = !s || OFFLINE.has(s.state);
+    btn.classList.toggle('on', status === 'running' || status === 'done');
+    btn.classList.toggle('offline', offline);
+    btn.disabled = offline || status === 'running';
+    btn.querySelector('.state').textContent =
+      offline ? 'N/A' : { running: '...', done: 'DONE', error: 'FAIL' }[status] || 'RUN';
+  }
+
   let on = 0;
-  for (const btn of $('lights').children) {
+  for (const btn of $('lights').querySelectorAll('.light:not(.action)')) {
     const s = states.get(btn.dataset.entity);
     const isOn = s?.state === 'on';
     const offline = !s || OFFLINE.has(s.state);
@@ -303,8 +333,6 @@ async function refreshHistory() {
 
 // ---------- Controls ----------
 
-const domainOf = (id) => id.split('.')[0];
-
 async function toggleLight(id) {
   const s = states.get(id);
   if (!s) return;
@@ -339,9 +367,25 @@ async function setAll(on) {
   }
 }
 
+async function runAction(id) {
+  actionStatus.set(id, 'running');
+  renderLights();
+  try {
+    await callService(domainOf(id), ACTION_SERVICE[domainOf(id)], id);
+    actionStatus.set(id, 'done');
+  } catch (err) {
+    console.error(err);
+    actionStatus.set(id, 'error');
+  }
+  renderLights();
+  setTimeout(() => { actionStatus.delete(id); renderLights(); }, 2500);
+}
+
 $('lights').addEventListener('click', (ev) => {
   const btn = ev.target.closest('button.light');
-  if (btn) toggleLight(btn.dataset.entity);
+  if (!btn) return;
+  if (btn.classList.contains('action')) runAction(btn.dataset.entity);
+  else toggleLight(btn.dataset.entity);
 });
 $('allOn').addEventListener('click', () => setAll(true));
 $('allOff').addEventListener('click', () => setAll(false));

@@ -144,6 +144,9 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
 .light.on .glass { fill: var(--yellow); }
 .light.on .shine { fill: var(--text); }
 .light.pending { opacity: 0.6; }
+.light.action .glass { fill: var(--yellow); }
+.light.action .state { color: var(--cyan); }
+.light.action.on .state { color: var(--yellow); }
 .light:disabled { cursor: not-allowed; }
 
 .empty { color: var(--dim); }

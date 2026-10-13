@@ -30,6 +30,7 @@ To pick entities and names yourself, `cp config.example.json config.json` and ed
 | `refreshSeconds` | `5` | State polling interval |
 | `historyRefreshMinutes` | `5` | CO₂ history refresh |
 | `scanlines` | `true` | CRT scanline overlay |
+| `buttons` | `[]` | Tiles at the start of the lights grid that run an `automation.*` (trigger), `script.*` or `scene.*`: `{ "entity", "name", "room" }` |
 | `exclude` | `[]` | Entity IDs to skip during auto-discovery; `*` is a wildcard (e.g. `sensor.outdoor_weather_*`) |
 
 ## Deploying to a Podman host

@@ -27,6 +27,7 @@ const ALLOWED = [
   { method: 'GET', re: /^\/api\/history\/period\/[^/]+$/ },
   { method: 'POST', re: /^\/api\/template$/ }, // used to look up each light's area
   { method: 'POST', re: /^\/api\/services\/(light|switch)\/(turn_on|turn_off|toggle)$/ },
+  { method: 'POST', re: /^\/api\/services\/(automation\/trigger|script\/turn_on|scene\/turn_on)$/ },
 ];
 
 const MIME = {

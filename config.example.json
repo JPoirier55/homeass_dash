@@ -20,6 +20,10 @@
     { "name": "BEDROOM", "entity": "sensor.bedroom_co2" }
   ],
 
+  "buttons": [
+    { "entity": "automation.wake_up", "name": "WAKE UP", "room": "BEDROOM" }
+  ],
+
   "lights": "auto",
   "_lightsExample": [
     { "entity": "light.floor_lamp", "name": "FLOOR LAMP", "room": "LIVING ROOM" },
