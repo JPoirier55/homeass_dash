@@ -191,3 +191,11 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
 @media (max-width: 700px) {
   .board, .board.no-air { grid-template-columns: minmax(0, 1fr); grid-template-areas: "climate" "air" "lights"; }
 }
+
+/* Landscape tablets: stretch the board to fill the screen height instead of leaving a gap below. */
+@media (min-width: 701px) and (max-width: 1100px) {
+  .wrap { display: grid; grid-template-rows: auto 1fr auto; min-height: calc(100vh - 26px); }
+  .board { align-items: stretch; }
+  .climate-grid, .lights-grid, .co2-list { flex: 1; grid-auto-rows: minmax(min-content, 1fr); }
+  .card, .light { justify-content: space-between; }
+}

@@ -26,5 +26,3 @@
     { "entity": "switch.porch_light", "name": "PORCH", "room": "OUTSIDE" }
   ]
 }
-cd ~/homeass-dash && git pull && podman build --format docker -t localhost/homeass-dash:latest . &&
-  systemctl --user restart homeass-dash
