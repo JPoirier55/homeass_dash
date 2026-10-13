@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Homelab Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;family=VT323&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="screen">
+<div class="scanlines" aria-hidden="true"></div>
+<div class="wrap">
+
+<header class="hud px-frame">
+  <div class="brand">
+    <svg aria-hidden="true" width="48" height="48" viewBox="0 0 12 12" shape-rendering="crispEdges">
+      <path fill="#b13e53" d="M6 0h1v1h1v1h1v1h1v1h1v1h1v1h-2v6h-8v-6h-2v-1h1v-1h1v-1h1v-1h1v-1h1v-1h1z"></path>
+      <rect x="3" y="7" width="2" height="2" fill="#ffcd75"></rect>
+      <rect x="7" y="8" width="2" height="4" fill="#5d275d"></rect>
+    </svg>
+    <div class="brand-text">
+      <h1 id="title">HOMELAB</h1>
+      <div class="status-line">HOUSE STATUS // <span id="status" class="ok">CONNECTING…</span></div>
+    </div>
+  </div>
+  <div class="stats">
+    <div class="stat"><span class="stat-label">SENSORS</span><span class="stat-value green"><span id="sensorCount">–</span> <span class="px-blink">&#9632;</span></span></div>
+    <div class="stat"><span class="stat-label">LIGHTS ON</span><span class="stat-value yellow" id="lightCount">–</span></div>
+    <div class="stat"><span class="stat-label">AVG TEMP</span><span class="stat-value cyan" id="avgTemp">–</span></div>
+    <div class="stat"><span class="stat-label">TIME</span><span class="stat-value" id="clock">--:--</span></div>
+  </div>
+</header>
+
+<section id="climateSection" aria-labelledby="climate-h" class="section">
+  <div class="section-head">
+    <svg aria-hidden="true" width="24" height="24" viewBox="0 0 8 8" shape-rendering="crispEdges"><path fill="#ef7d57" d="M3 0h2v5h1v3h-4v-3h1z"></path><rect x="4" y="1" width="1" height="4" fill="#f4f4f4"></rect></svg>
+    <h2 id="climate-h">CLIMATE</h2>
+    <span class="muted" id="climateSub"></span>
+  </div>
+  <div class="climate-grid" id="climate"></div>
+</section>
+
+<div class="split">
+  <section id="co2Section" aria-labelledby="air-h" class="section air">
+    <div class="section-head">
+      <svg aria-hidden="true" width="24" height="24" viewBox="0 0 8 8" shape-rendering="crispEdges"><path fill="#94b0c2" d="M2 2h3v1h1v1h1v1h1v2h-8v-2h1v-2h1z"></path><rect x="3" y="3" width="1" height="1" fill="#f4f4f4"></rect></svg>
+      <h2 id="air-h">AIR · CO2</h2>
+    </div>
+    <div id="co2" class="co2-list"></div>
+  </section>
+
+  <section id="lightsSection" aria-labelledby="lights-h" class="section lights">
+    <div class="section-head spread">
+      <div class="section-head">
+        <svg aria-hidden="true" width="24" height="24" viewBox="0 0 12 12" shape-rendering="crispEdges"><path fill="#ffcd75" d="M4 0h4v1h2v1h1v3h-1v1h-1v1h-1v1h-4v-1h-1v-1h-1v-1h-1v-3h1v-1h2z"></path><rect x="4" y="8" width="4" height="3" fill="#94b0c2"></rect></svg>
+        <h2 id="lights-h">LIGHTS</h2>
+        <span class="muted" id="lightsSub"></span>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="px-btn primary" id="allOn">ALL ON</button>
+        <button type="button" class="px-btn" id="allOff">ALL OFF</button>
+      </div>
+    </div>
+    <div class="lights-grid" id="lights"></div>
+  </section>
+</div>
+
+<footer class="foot">
+  <span id="updated">WAITING FOR HOME ASSISTANT</span>
+  <span>PRESS START TO CONTINUE<span class="px-blink">_</span></span>
+</footer>
+
+</div>
+</div>
+<script src="app.js" type="module"></script>
+</body>
+</html>

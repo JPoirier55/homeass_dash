@@ -1,0 +1,11 @@
+{
+  "name": "homeass-dash",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pixel-art Home Assistant dashboard",
+  "type": "module",
+  "engines": { "node": ">=21.7" },
+  "scripts": {
+    "start": "node server.js"
+  }
+}

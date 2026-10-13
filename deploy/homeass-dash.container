@@ -1,0 +1,20 @@
+# Podman Quadlet unit (rootless). Installed to ~/.config/containers/systemd/ by deploy.sh;
+# systemd generates homeass-dash.service from it.
+[Unit]
+Description=HOMELAB Home Assistant dashboard
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+Image=localhost/homeass-dash:latest
+ContainerName=homeass-dash
+EnvironmentFile=%h/homeass-dash/.env
+Environment=HOST=0.0.0.0 PORT=8080
+PublishPort=8080:8080
+Volume=%h/homeass-dash/config.json:/app/config.json:ro,Z
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

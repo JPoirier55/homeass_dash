@@ -1,0 +1,28 @@
+{
+  "title": "HOMELAB",
+  "refreshSeconds": 5,
+  "historyRefreshMinutes": 5,
+  "scanlines": true,
+
+  "exclude": ["sensor.outdoor_weather_*", "light.christmas_tree"],
+
+  "climate": [
+    { "name": "LIVING RM", "temperature": "sensor.living_room_temperature", "humidity": "sensor.living_room_humidity" },
+    { "name": "KITCHEN",   "temperature": "sensor.kitchen_temperature",     "humidity": "sensor.kitchen_humidity" },
+    { "name": "OFFICE",    "temperature": "sensor.office_temperature",      "humidity": "sensor.office_humidity" },
+    { "name": "BEDROOM",   "temperature": "sensor.bedroom_temperature",     "humidity": "sensor.bedroom_humidity" },
+    { "name": "GARAGE",    "temperature": "sensor.garage_temperature",      "humidity": "sensor.garage_humidity" },
+    { "name": "BASEMENT",  "temperature": "sensor.basement_temperature",    "humidity": "sensor.basement_humidity" }
+  ],
+
+  "co2": [
+    { "name": "OFFICE",  "entity": "sensor.office_co2" },
+    { "name": "BEDROOM", "entity": "sensor.bedroom_co2" }
+  ],
+
+  "lights": "auto",
+  "_lightsExample": [
+    { "entity": "light.floor_lamp", "name": "FLOOR LAMP", "room": "LIVING ROOM" },
+    { "entity": "switch.porch_light", "name": "PORCH", "room": "OUTSIDE" }
+  ]
+}
