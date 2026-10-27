@@ -416,10 +416,145 @@ const TREE = `
     <rect x="5" y="10" width="2" height="2" fill="#5d275d"></rect>
   </svg>`;
 
+// Pixel cobweb for the screen corners: radial threads with sagging rings, drawn
+// from the top-left on an n×n grid (CSS mirrors it for the other corner).
+function cobweb(n = 22) {
+  const px = new Set();
+  const plot = (x, y) => x >= 0 && y >= 0 && x < n && y < n && px.add(`${x},${y}`);
+  const line = (x0, y0, x1, y1) => {
+    const steps = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+    for (let i = 0; i <= steps; i++) plot(Math.round(x0 + (x1 - x0) * i / steps), Math.round(y0 + (y1 - y0) * i / steps));
+  };
+  const angles = [0, 0.38, 0.79, 1.19, Math.PI / 2];
+  for (const a of angles) {
+    const len = (n - 1) / Math.max(Math.cos(a), Math.sin(a));
+    line(0, 0, Math.cos(a) * len, Math.sin(a) * len);
+  }
+  for (const r of [5, 10, 15, 20]) {
+    for (let i = 0; i < angles.length - 1; i++) {
+      const [a, b] = [angles[i], angles[i + 1]];
+      const mid = (a + b) / 2;
+      const sag = r * 0.82; // ring threads dip toward the corner between radials
+      const [x0, y0] = [Math.cos(a) * r, Math.sin(a) * r];
+      const [xm, ym] = [Math.cos(mid) * sag, Math.sin(mid) * sag];
+      const [x1, y1] = [Math.cos(b) * r, Math.sin(b) * r];
+      line(x0, y0, xm, ym);
+      line(xm, ym, x1, y1);
+    }
+  }
+  const d = [...px].map((p) => { const [x, y] = p.split(','); return `M${x} ${y}h1v1h-1z`; }).join('');
+  return `<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges"><path fill="#b9a3cc" d="${d}"></path></svg>`;
+}
+
+const SPIDER = `
+  <svg viewBox="0 0 7 30" shape-rendering="crispEdges">
+    <rect x="3" y="0" width="1" height="25" fill="#b9a3cc" opacity="0.6"></rect>
+    <path fill="#07040a" d="M1 25h1v1h-1zM5 25h1v1h-1zM0 26h1v1h-1zM2 26h3v1h-3zM6 26h1v1h-1zM1 27h5v1h-5zM0 28h1v1h-1zM2 28h3v1h-3zM6 28h1v1h-1zM1 29h1v1h-1zM5 29h1v1h-1z"></path>
+    <path fill="#ef7d57" d="M2 27h1v1h-1zM4 27h1v1h-1z"></path>
+  </svg>`;
+
+let websDrawn = false;
+
+function showWebs(on) {
+  const el = $('webs');
+  if (on && !websDrawn) {
+    const web = cobweb();
+    el.innerHTML = `<div class="web left">${web}</div><div class="web right">${web}</div><div class="spider">${SPIDER}</div>`;
+    websDrawn = true;
+  }
+  el.hidden = !on;
+}
+
+// Falling overlays, drawn on a fixed canvas above the board (clicks pass through).
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
+
+const LEAF_FRAMES = [
+  ['..#..', '.###.', '#####', '.###.', '..s..'],
+  ['...##', '..###', '.###.', '###..', 's....'],
+  ['##...', '###..', '.###.', '..###', '....s'],
+];
+const LEAF_CYCLE = [0, 1, 0, 2]; // rocks side to side as it falls
+
+const FALLING = {
+  snow: {
+    area: 9000, // one particle per this many square px
+    spawn: () => ({ size: pick([2, 3, 3, 4, 5]), speed: 18 + Math.random() * 30, drift: 6 + Math.random() * 12, rate: 1 }),
+    draw(ctx, f, x, y) {
+      ctx.fillStyle = f.size > 3 ? 'rgba(244,244,244,0.9)' : 'rgba(244,244,244,0.55)';
+      ctx.fillRect(x, y, f.size, f.size);
+    },
+  },
+  leaves: {
+    area: 32000,
+    spawn: () => ({
+      size: pick([2, 3, 3]) * 5, speed: 22 + Math.random() * 22, drift: 18 + Math.random() * 28, rate: 0.6 + Math.random() * 0.6,
+      color: pick(['#ef7d57', '#b13e53', '#ffcd75', '#a1452e']),
+    }),
+    draw(ctx, f, x, y) {
+      const scale = f.size / 5;
+      const frame = LEAF_FRAMES[LEAF_CYCLE[Math.floor(f.sway * 1.5) % 4]];
+      frame.forEach((row, ry) => [...row].forEach((c, rx) => {
+        if (c === '.') return;
+        ctx.fillStyle = c === 's' ? '#5d275d' : f.color;
+        ctx.fillRect(x + rx * scale, y + ry * scale, scale, scale);
+      }));
+    },
+  },
+};
+
+let falling = { kind: null, frame: 0, cleanup: null };
+
+function startFalling(kind) {
+  if (kind === falling.kind) return;
+  stopFalling();
+  if (!kind || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const fx = FALLING[kind];
+  const canvas = $('falling');
+  const ctx = canvas.getContext('2d');
+  let w = 0, h = 0, items = [];
+  const spawn = (y) => ({ x: Math.random() * w, y, sway: Math.random() * Math.PI * 2, ...fx.spawn() });
+  const resize = () => {
+    w = canvas.width = innerWidth;
+    h = canvas.height = innerHeight;
+    items = Array.from({ length: Math.round(w * h / fx.area) }, () => spawn(Math.random() * h));
+  };
+  resize();
+  addEventListener('resize', resize);
+  canvas.hidden = false;
+
+  let last = performance.now();
+  const step = (now) => {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    ctx.clearRect(0, 0, w, h);
+    for (const f of items) {
+      f.y += f.speed * dt;
+      f.sway += dt * f.rate;
+      if (f.y > h) Object.assign(f, spawn(-f.size));
+      // Whole-pixel positions keep everything crisp like the rest of the UI.
+      fx.draw(ctx, f, Math.round(f.x + Math.sin(f.sway) * f.drift), Math.round(f.y));
+    }
+    falling.frame = requestAnimationFrame(step);
+  };
+  falling = {
+    kind,
+    frame: requestAnimationFrame(step),
+    cleanup: () => { removeEventListener('resize', resize); ctx.clearRect(0, 0, w, h); },
+  };
+}
+
+function stopFalling() {
+  if (!falling.kind) return;
+  cancelAnimationFrame(falling.frame);
+  falling.cleanup();
+  falling = { kind: null, frame: 0, cleanup: null };
+  $('falling').hidden = true;
+}
+
 const SEASONS = {
-  halloween: { decor: PUMPKIN, footer: 'TRICK OR TREAT' },
-  fall: { decor: LEAF, footer: 'GIVE THANKS' },
-  christmas: { decor: TREE, footer: 'HAPPY HOLIDAYS', snow: true },
+  halloween: { decor: PUMPKIN, footer: 'TRICK OR TREAT', webs: true },
+  fall: { decor: LEAF, footer: 'GIVE THANKS', falling: 'leaves' },
+  christmas: { decor: TREE, footer: 'HAPPY HOLIDAYS', falling: 'snow' },
 };
 const DEFAULT_FOOTER = 'PRESS START TO CONTINUE';
 
@@ -448,63 +583,9 @@ function applySeason() {
   else delete document.documentElement.dataset.season;
   $('seasonDecor').innerHTML = theme.decor || '';
   $('footMsg').textContent = theme.footer || DEFAULT_FOOTER;
-  if (theme.snow && config.snow !== false) startSnow();
-  else stopSnow();
-}
-
-// Falling pixel snow on a fixed canvas above the board (clicks pass through).
-let snowFrame = 0;
-
-function startSnow() {
-  if (snowFrame || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  const canvas = $('snow');
-  const ctx = canvas.getContext('2d');
-  let w = 0, h = 0, flakes = [];
-  const flake = (y) => ({
-    x: Math.random() * w,
-    y,
-    size: [2, 3, 3, 4, 5][Math.floor(Math.random() * 5)],
-    speed: 18 + Math.random() * 30,
-    sway: Math.random() * Math.PI * 2,
-    drift: 6 + Math.random() * 12,
-  });
-  const resize = () => {
-    w = canvas.width = innerWidth;
-    h = canvas.height = innerHeight;
-    flakes = Array.from({ length: Math.round(w * h / 9000) }, () => flake(Math.random() * h));
-  };
-  resize();
-  addEventListener('resize', resize);
-  canvas.hidden = false;
-
-  let last = performance.now();
-  const step = (now) => {
-    const dt = Math.min(0.1, (now - last) / 1000);
-    last = now;
-    ctx.clearRect(0, 0, w, h);
-    for (const f of flakes) {
-      f.y += f.speed * dt;
-      f.sway += dt;
-      if (f.y > h) Object.assign(f, flake(-f.size));
-      ctx.fillStyle = f.size > 3 ? 'rgba(244,244,244,0.9)' : 'rgba(244,244,244,0.55)';
-      // Whole-pixel positions keep the flakes crisp like the rest of the UI.
-      ctx.fillRect(Math.round(f.x + Math.sin(f.sway) * f.drift), Math.round(f.y), f.size, f.size);
-    }
-    snowFrame = requestAnimationFrame(step);
-  };
-  snowFrame = requestAnimationFrame(step);
-  stopSnow.cleanup = () => {
-    removeEventListener('resize', resize);
-    ctx.clearRect(0, 0, w, h);
-  };
-}
-
-function stopSnow() {
-  if (!snowFrame) return;
-  cancelAnimationFrame(snowFrame);
-  snowFrame = 0;
-  stopSnow.cleanup?.();
-  $('snow').hidden = true;
+  const effects = config.effects !== false;
+  startFalling(effects && theme.falling);
+  showWebs(effects && !!theme.webs);
 }
 
 function tickClock() {

@@ -73,7 +73,14 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
   position: fixed; inset: 0; pointer-events: none; z-index: 5;
   background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0) 4px);
 }
-.snow { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
+.falling { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
+.webs { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
+.web { position: absolute; top: 0; width: 110px; height: 110px; opacity: 0.6; }
+.web svg, .spider svg { display: block; width: 100%; height: 100%; }
+.web.left { left: 0; }
+.web.right { right: 0; transform: scaleX(-1); }
+.spider { position: absolute; top: 0; right: 40px; width: 28px; height: 120px; animation: spider-bob 4s steps(6) infinite alternate; }
+@keyframes spider-bob { from { transform: translateY(-24px); } to { transform: translateY(0); } }
 .wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
 
 .px-frame {
@@ -198,6 +205,8 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
   .brand { gap: 12px; }
   .brand svg { width: 32px; height: 32px; }
   .season-decor svg { width: 24px; height: 24px; }
+  .web { width: 88px; height: 88px; }
+  .spider { right: 30px; width: 21px; height: 90px; }
   .brand-text { gap: 4px; }
   .stats { gap: 8px; }
   .stat { padding: 6px 10px; gap: 4px; min-width: 0; }
@@ -237,4 +246,8 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
   .board { align-items: stretch; }
   .climate-grid, .lights-grid, .co2-list { flex: 1; grid-auto-rows: minmax(min-content, 1fr); }
   .card, .light { justify-content: space-between; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spider { animation: none; }
 }

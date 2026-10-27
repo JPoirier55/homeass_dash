@@ -4,7 +4,7 @@
   "historyRefreshMinutes": 5,
   "scanlines": true,
   "theme": "auto",
-  "snow": true,
+  "effects": true,
 
   "exclude": ["sensor.outdoor_weather_*", "light.christmas_tree"],
 

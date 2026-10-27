@@ -31,7 +31,7 @@ To pick entities and names yourself, `cp config.example.json config.json` and ed
 | `historyRefreshMinutes` | `5` | CO₂ history refresh |
 | `scanlines` | `true` | CRT scanline overlay |
 | `theme` | `"auto"` | Seasonal theme: `auto` picks by date (October → `halloween`, November through Thanksgiving → `fall`, the day after Thanksgiving through December → `christmas`, otherwise none). Set a name to force one, or `"none"` to turn themes off. Add `?theme=christmas` to the URL to preview one |
-| `snow` | `true` | Falling snow overlay during the `christmas` theme |
+| `effects` | `true` | Theme overlays: cobwebs for `halloween`, falling leaves for `fall`, falling snow for `christmas`. Set `false` to keep only the colors |
 | `buttons` | `[]` | Tiles at the start of the lights grid that run an `automation.*` (trigger), `script.*` or `scene.*`: `{ "entity", "name", "room" }` |
 | `exclude` | `[]` | Entity IDs to skip during auto-discovery; `*` is a wildcard (e.g. `sensor.outdoor_weather_*`) |
 
