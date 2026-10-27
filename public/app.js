@@ -103,7 +103,7 @@ const fromF = (f, unit) => (unit === '°C' ? (f - 32) * 5 / 9 : f);
 const tBand = (f) => f < 62 ? ['COLD', C.blue] : f < 68 ? ['COOL', C.cyan] : f < 75 ? ['COMFY', C.green] : f < 80 ? ['WARM', C.yellow] : ['HOT', C.orange];
 const co2Color = (v) => v < 800 ? C.green : v < 1200 ? C.yellow : C.red;
 const segs = (n, total, colorFor) =>
-  Array.from({ length: total }, (_, i) => `<div style="background:${i < n ? colorFor(i) : C.edge}"></div>`).join('');
+  Array.from({ length: total }, (_, i) => `<div style="background:${i < n ? colorFor(i) : 'var(--edge)'}"></div>`).join('');
 
 // ---------- Render ----------
 
@@ -146,7 +146,7 @@ function renderCo2() {
     const filled = ppm == null ? 0 : Math.max(0, Math.min(20, Math.round((ppm - 400) / 80)));
     const hist = co2History.get(e.entity) || [];
     const bars = hist.map((v) => v == null
-      ? '<div style="height:4px;background:#262b44"></div>'
+      ? '<div style="height:4px;background:var(--panel-2)"></div>'
       : `<div style="height:${Math.round(Math.max(4, (v - 400) / 1600 * 52))}px;background:${co2Color(v)}"></div>`).join('');
     return `
       <article class="card co2-card px-frame${ppm == null ? ' offline' : ''}">
@@ -390,8 +390,126 @@ $('lights').addEventListener('click', (ev) => {
 $('allOn').addEventListener('click', () => setAll(true));
 $('allOff').addEventListener('click', () => setAll(false));
 
+// ---------- Seasonal themes ----------
+
+const PUMPKIN = `
+  <svg width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges">
+    <rect x="5" y="0" width="2" height="2" fill="#38b764"></rect>
+    <path fill="#ef7d57" d="M2 2h8v1h1v1h1v6h-1v1h-1v1h-8v-1h-1v-1h-1v-6h1v-1h1z"></path>
+    <rect x="6" y="2" width="1" height="10" fill="#b13e53"></rect>
+    <path fill="#ffcd75" d="M3 5h2v2h-2zM7 5h2v2h-2zM3 8h6v1h-1v1h-4v-1h-1z"></path>
+  </svg>`;
+
+const LEAF = `
+  <svg width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges">
+    <path fill="#ef7d57" d="M5 0h2v1h1v1h2v1h1v2h1v1h-1v1h-1v1h-1v1h-2v-1h-2v1h-2v-1h-1v-1h-1v-1h-1v-1h1v-2h1v-1h2v-1h1z"></path>
+    <path fill="#b13e53" d="M5 2h1v7h-1zM3 5h2v1h-2zM6 5h3v1h-3z"></path>
+    <rect x="5" y="9" width="1" height="3" fill="#5d275d"></rect>
+  </svg>`;
+
+const TREE = `
+  <svg width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges">
+    <rect x="5" y="0" width="2" height="1" fill="#ffcd75"></rect>
+    <path fill="#38b764" d="M5 1h2v1h1v1h1v1h-1v1h1v1h1v1h-1v1h1v1h1v1h-10v-1h1v-1h1v-1h-1v-1h1v-1h1v-1h-1v-1h1v-1h1z"></path>
+    <path fill="#b13e53" d="M5 3h1v1h-1zM7 6h1v1h-1zM3 8h1v1h-1z"></path>
+    <path fill="#73eff7" d="M6 5h1v1h-1zM4 6h1v1h-1zM8 8h1v1h-1z"></path>
+    <rect x="5" y="10" width="2" height="2" fill="#5d275d"></rect>
+  </svg>`;
+
+const SEASONS = {
+  halloween: { decor: PUMPKIN, footer: 'TRICK OR TREAT' },
+  fall: { decor: LEAF, footer: 'GIVE THANKS' },
+  christmas: { decor: TREE, footer: 'HAPPY HOLIDAYS', snow: true },
+};
+const DEFAULT_FOOTER = 'PRESS START TO CONTINUE';
+
+// Day of November that Thanksgiving (4th Thursday) falls on.
+const thanksgiving = (year) => 1 + (4 - new Date(year, 10, 1).getDay() + 7) % 7 + 21;
+
+// October → Halloween; November through Thanksgiving → fall; from the day after → Christmas.
+function seasonFor(d) {
+  const month = d.getMonth();
+  if (month === 9) return 'halloween';
+  if (month === 10) return d.getDate() <= thanksgiving(d.getFullYear()) ? 'fall' : 'christmas';
+  if (month === 11) return 'christmas';
+  return '';
+}
+
+let season = null;
+
+// Precedence: ?theme= in the URL (for previewing), then config.theme, then the calendar.
+function applySeason() {
+  const forced = new URLSearchParams(location.search).get('theme') || config.theme;
+  const name = forced && forced !== 'auto' ? (SEASONS[forced] ? forced : '') : seasonFor(new Date());
+  if (name === season) return;
+  season = name;
+  const theme = SEASONS[name] || {};
+  if (name) document.documentElement.dataset.season = name;
+  else delete document.documentElement.dataset.season;
+  $('seasonDecor').innerHTML = theme.decor || '';
+  $('footMsg').textContent = theme.footer || DEFAULT_FOOTER;
+  if (theme.snow && config.snow !== false) startSnow();
+  else stopSnow();
+}
+
+// Falling pixel snow on a fixed canvas above the board (clicks pass through).
+let snowFrame = 0;
+
+function startSnow() {
+  if (snowFrame || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const canvas = $('snow');
+  const ctx = canvas.getContext('2d');
+  let w = 0, h = 0, flakes = [];
+  const flake = (y) => ({
+    x: Math.random() * w,
+    y,
+    size: [2, 3, 3, 4, 5][Math.floor(Math.random() * 5)],
+    speed: 18 + Math.random() * 30,
+    sway: Math.random() * Math.PI * 2,
+    drift: 6 + Math.random() * 12,
+  });
+  const resize = () => {
+    w = canvas.width = innerWidth;
+    h = canvas.height = innerHeight;
+    flakes = Array.from({ length: Math.round(w * h / 9000) }, () => flake(Math.random() * h));
+  };
+  resize();
+  addEventListener('resize', resize);
+  canvas.hidden = false;
+
+  let last = performance.now();
+  const step = (now) => {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    ctx.clearRect(0, 0, w, h);
+    for (const f of flakes) {
+      f.y += f.speed * dt;
+      f.sway += dt;
+      if (f.y > h) Object.assign(f, flake(-f.size));
+      ctx.fillStyle = f.size > 3 ? 'rgba(244,244,244,0.9)' : 'rgba(244,244,244,0.55)';
+      // Whole-pixel positions keep the flakes crisp like the rest of the UI.
+      ctx.fillRect(Math.round(f.x + Math.sin(f.sway) * f.drift), Math.round(f.y), f.size, f.size);
+    }
+    snowFrame = requestAnimationFrame(step);
+  };
+  snowFrame = requestAnimationFrame(step);
+  stopSnow.cleanup = () => {
+    removeEventListener('resize', resize);
+    ctx.clearRect(0, 0, w, h);
+  };
+}
+
+function stopSnow() {
+  if (!snowFrame) return;
+  cancelAnimationFrame(snowFrame);
+  snowFrame = 0;
+  stopSnow.cleanup?.();
+  $('snow').hidden = true;
+}
+
 function tickClock() {
   const d = new Date();
+  applySeason();
   $('clock').textContent = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 

@@ -10,20 +10,22 @@
 </head>
 <body>
 <div class="screen">
+<canvas class="snow" id="snow" aria-hidden="true" hidden></canvas>
 <div class="scanlines" aria-hidden="true"></div>
 <div class="wrap">
 
 <header class="hud px-frame">
   <div class="brand">
     <svg aria-hidden="true" width="48" height="48" viewBox="0 0 12 12" shape-rendering="crispEdges">
-      <path fill="#b13e53" d="M6 0h1v1h1v1h1v1h1v1h1v1h1v1h-2v6h-8v-6h-2v-1h1v-1h1v-1h1v-1h1v-1h1v-1h1z"></path>
-      <rect x="3" y="7" width="2" height="2" fill="#ffcd75"></rect>
+      <path class="roof" fill="#b13e53" d="M6 0h1v1h1v1h1v1h1v1h1v1h1v1h-2v6h-8v-6h-2v-1h1v-1h1v-1h1v-1h1v-1h1v-1h1z"></path>
+      <rect class="window" x="3" y="7" width="2" height="2" fill="#ffcd75"></rect>
       <rect x="7" y="8" width="2" height="4" fill="#5d275d"></rect>
     </svg>
     <div class="brand-text">
       <h1 id="title">HOMELAB</h1>
       <div class="status-line">HOUSE STATUS // <span id="status" class="ok">CONNECTING…</span></div>
     </div>
+    <span class="season-decor" id="seasonDecor" aria-hidden="true"></span>
   </div>
   <div class="stats">
     <div class="stat"><span class="stat-label">SENSORS</span><span class="stat-value green"><span id="sensorCount">–</span> <span class="px-blink">&#9632;</span></span></div>
@@ -69,7 +71,7 @@
 
 <footer class="foot">
   <span id="updated">WAITING FOR HOME ASSISTANT</span>
-  <span>PRESS START TO CONTINUE<span class="px-blink">_</span></span>
+  <span><span id="footMsg">PRESS START TO CONTINUE</span><span class="px-blink">_</span></span>
 </footer>
 
 </div>

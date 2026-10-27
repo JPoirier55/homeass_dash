@@ -3,6 +3,8 @@
   "refreshSeconds": 5,
   "historyRefreshMinutes": 5,
   "scanlines": true,
+  "theme": "auto",
+  "snow": true,
 
   "exclude": ["sensor.outdoor_weather_*", "light.christmas_tree"],
 
