@@ -13,6 +13,7 @@
   --blue: #41a6f6;
   --orange: #ef7d57;
   --red: #b13e53;
+  --frame: var(--edge);
   --title: var(--yellow);
   --title-shadow: var(--red);
   --accent: var(--yellow);
@@ -41,12 +42,15 @@
 :root[data-season="fall"] .brand .roof { fill: var(--orange); }
 
 :root[data-season="christmas"] {
-  --bg: #0c1714; --panel: #12241e; --panel-2: #1a362c; --edge: #2a5243; --shadow: #050b09;
+  --bg: #0c1714; --panel: #12241e; --panel-2: #3a1720; --edge: #2a5243; --shadow: #050b09;
   --muted: #a9c9bc; --dim: #608a7a;
+  --frame: #9c3046;
   --title: var(--text); --title-shadow: var(--red);
   --accent: var(--red); --accent-ink: var(--text); --accent-shadow: #38b764;
 }
 :root[data-season="christmas"] .brand .roof { fill: var(--text); }
+:root[data-season="christmas"] .brand .window { fill: var(--red); }
+:root[data-season="christmas"] .section h2 { text-shadow: 2px 2px 0 var(--red); }
 
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
@@ -74,18 +78,22 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
   background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0) 4px);
 }
 .falling { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 4; }
-.webs { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
+.corners { position: fixed; inset: 0; pointer-events: none; z-index: 4; }
 .web { position: absolute; top: 0; width: 110px; height: 110px; opacity: 0.6; }
-.web svg, .spider svg { display: block; width: 100%; height: 100%; }
-.web.left { left: 0; }
-.web.right { right: 0; transform: scaleX(-1); }
-.spider { position: absolute; top: 0; right: 40px; width: 28px; height: 120px; animation: spider-bob 4s steps(6) infinite alternate; }
+.web svg, .spider svg, .garland svg { display: block; width: 100%; height: 100%; }
+.corners .left { left: 0; }
+.corners .right { right: 0; transform: scaleX(-1); }
+.garland { position: absolute; top: 0; width: 150px; height: 150px; }
+.garland .b0 { animation: bulb 1.6s steps(1) infinite; }
+.garland .b1 { animation: bulb 1.6s steps(1) infinite -0.8s; }
+@keyframes bulb { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.3; } }
+.spider { position: absolute; top: 0; right: 12px; width: 28px; height: 120px; animation: spider-bob 4s steps(6) infinite alternate; }
 @keyframes spider-bob { from { transform: translateY(-24px); } to { transform: translateY(0); } }
 .wrap { max-width: 1240px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; }
 
 .px-frame {
   background: var(--panel);
-  box-shadow: 0 -4px 0 0 var(--edge), 0 4px 0 0 var(--edge), -4px 0 0 0 var(--edge), 4px 0 0 0 var(--edge);
+  box-shadow: 0 -4px 0 0 var(--frame), 0 4px 0 0 var(--frame), -4px 0 0 0 var(--frame), 4px 0 0 0 var(--frame);
 }
 
 .muted { color: var(--muted); }
@@ -97,7 +105,7 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
 .hud {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px;
   padding: 20px 24px;
-  box-shadow: 0 -4px 0 0 var(--edge), 0 4px 0 0 var(--edge), -4px 0 0 0 var(--edge), 4px 0 0 0 var(--edge), 8px 12px 0 0 var(--shadow);
+  box-shadow: 0 -4px 0 0 var(--frame), 0 4px 0 0 var(--frame), -4px 0 0 0 var(--frame), 4px 0 0 0 var(--frame), 8px 12px 0 0 var(--shadow);
 }
 .brand { display: flex; align-items: center; gap: 18px; }
 .brand-text { display: flex; flex-direction: column; gap: 8px; }
@@ -105,6 +113,25 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
 .status-line { color: var(--muted); }
 .season-decor { display: flex; align-self: flex-start; }
 .season-decor:empty { display: none; }
+/* Candle flicker: the face and the glow around it step between a few brightness levels. */
+.pumpkin { animation: pumpkin-glow 2.2s steps(1) infinite; }
+.pumpkin .face { animation: pumpkin-face 2.2s steps(1) infinite; }
+@keyframes pumpkin-glow {
+  0% { filter: drop-shadow(0 0 4px rgba(239, 125, 87, 0.6)); }
+  20% { filter: drop-shadow(0 0 9px rgba(255, 205, 117, 0.85)); }
+  35% { filter: drop-shadow(0 0 6px rgba(239, 125, 87, 0.7)); }
+  55% { filter: drop-shadow(0 0 11px rgba(255, 205, 117, 0.9)); }
+  70% { filter: drop-shadow(0 0 3px rgba(239, 125, 87, 0.5)); }
+  85% { filter: drop-shadow(0 0 8px rgba(255, 205, 117, 0.8)); }
+}
+@keyframes pumpkin-face {
+  0% { fill: #ffcd75; }
+  20% { fill: #fff4c8; }
+  35% { fill: #ffcd75; }
+  55% { fill: #fff4c8; }
+  70% { fill: #ef9a57; }
+  85% { fill: #ffe39e; }
+}
 #status.ok { color: var(--green); }
 #status.warn { color: var(--yellow); }
 #status.bad { color: var(--orange); }
@@ -168,7 +195,7 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
 
 .lights-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 20px; }
 .light {
-  --l-edge: var(--edge);
+  --l-edge: var(--frame);
   display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
   min-height: 120px; padding: 14px; border: 0; text-align: left;
   color: var(--muted); background: var(--panel);
@@ -201,12 +228,13 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
   .screen { padding: 12px 12px 14px; }
   .wrap { gap: 14px; }
 
-  .hud { padding: 10px 14px; gap: 12px; box-shadow: 0 -4px 0 0 var(--edge), 0 4px 0 0 var(--edge), -4px 0 0 0 var(--edge), 4px 0 0 0 var(--edge), 5px 7px 0 0 var(--shadow); }
+  .hud { padding: 10px 14px; gap: 12px; box-shadow: 0 -4px 0 0 var(--frame), 0 4px 0 0 var(--frame), -4px 0 0 0 var(--frame), 4px 0 0 0 var(--frame), 5px 7px 0 0 var(--shadow); }
   .brand { gap: 12px; }
   .brand svg { width: 32px; height: 32px; }
   .season-decor svg { width: 24px; height: 24px; }
   .web { width: 88px; height: 88px; }
-  .spider { right: 30px; width: 21px; height: 90px; }
+  .garland { width: 120px; height: 120px; }
+  .spider { right: 8px; width: 21px; height: 90px; }
   .brand-text { gap: 4px; }
   .stats { gap: 8px; }
   .stat { padding: 6px 10px; gap: 4px; min-width: 0; }
@@ -249,5 +277,5 @@ button:focus-visible { outline: 4px solid var(--cyan); outline-offset: 6px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .spider { animation: none; }
+  .spider, .pumpkin, .pumpkin .face, .garland .bulb { animation: none; }
 }

@@ -393,11 +393,11 @@ $('allOff').addEventListener('click', () => setAll(false));
 // ---------- Seasonal themes ----------
 
 const PUMPKIN = `
-  <svg width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges">
+  <svg class="pumpkin" width="36" height="36" viewBox="0 0 12 12" shape-rendering="crispEdges">
     <rect x="5" y="0" width="2" height="2" fill="#38b764"></rect>
     <path fill="#ef7d57" d="M2 2h8v1h1v1h1v6h-1v1h-1v1h-8v-1h-1v-1h-1v-6h1v-1h1z"></path>
     <rect x="6" y="2" width="1" height="10" fill="#b13e53"></rect>
-    <path fill="#ffcd75" d="M3 5h2v2h-2zM7 5h2v2h-2zM3 8h6v1h-1v1h-4v-1h-1z"></path>
+    <path class="face" fill="#ffcd75" d="M3 5h2v2h-2zM7 5h2v2h-2zM3 8h6v1h-1v1h-4v-1h-1z"></path>
   </svg>`;
 
 const LEAF = `
@@ -453,16 +453,54 @@ const SPIDER = `
     <path fill="#ef7d57" d="M2 27h1v1h-1zM4 27h1v1h-1z"></path>
   </svg>`;
 
-let websDrawn = false;
+// Pixel garland for the screen corners: a bow in the corner with swags along the top
+// and side edges, strung with blinking bulbs. Drawn top-left; CSS mirrors it.
+const BOW = ['RR....RR', 'RRR..RRR', 'RRRKKRRR', 'RRRKKRRR', '.R.RR.R.', '..R..R..', '..R..R..'];
+const BULBS = ['#b13e53', '#ffcd75', '#73eff7', '#ef7d57'];
 
-function showWebs(on) {
-  const el = $('webs');
-  if (on && !websDrawn) {
-    const web = cobweb();
-    el.innerHTML = `<div class="web left">${web}</div><div class="web right">${web}</div><div class="spider">${SPIDER}</div>`;
-    websDrawn = true;
+function garland(n = 40) {
+  const layers = new Map(); // "fill|class" → path data
+  const plot = (x, y, fill, cls = '') => {
+    if (x < 0 || y < 0 || x >= n || y >= n) return;
+    const key = `${fill}|${cls}`;
+    layers.set(key, (layers.get(key) || '') + `M${x} ${y}h1v1h-1z`);
+  };
+  const sag = (i) => 1 + Math.round(5 * Math.sin(Math.PI * i / (n - 1)));
+  for (let i = 0; i < n; i++) {
+    const c = sag(i);
+    for (let t = 0; t < 3; t++) {
+      const fill = (i * 7 + t * 3) % 4 === 0 ? '#257179' : '#38b764';
+      plot(i, c + t, fill); // along the top
+      plot(c + t, i, fill); // down the side
+    }
+    if (i > 8 && i % 6 === 3) {
+      const color = BULBS[(i / 6 | 0) % BULBS.length];
+      const cls = `bulb b${(i / 6 | 0) % 2}`;
+      for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]]) {
+        plot(i + dx, c + 3 + dy, color, cls);
+        plot(c + 3 + dy, i + dx, color, cls);
+      }
+    }
   }
-  el.hidden = !on;
+  BOW.forEach((row, y) => [...row].forEach((ch, x) => {
+    if (ch !== '.') plot(x + 1, y + 1, ch === 'K' ? '#73172d' : '#b13e53');
+  }));
+  const paths = [...layers].map(([key, d]) => {
+    const [fill, cls] = key.split('|');
+    return `<path${cls ? ` class="${cls}"` : ''} fill="${fill}" d="${d}"></path>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges">${paths}</svg>`;
+}
+
+const CORNERS = {
+  webs: () => { const web = cobweb(); return `<div class="web left">${web}</div><div class="web right">${web}</div><div class="spider">${SPIDER}</div>`; },
+  garland: () => { const g = garland(); return `<div class="garland left">${g}</div><div class="garland right">${g}</div>`; },
+};
+
+function showCorners(kind) {
+  const el = $('corners');
+  el.innerHTML = kind ? CORNERS[kind]() : '';
+  el.hidden = !kind;
 }
 
 // Falling overlays, drawn on a fixed canvas above the board (clicks pass through).
@@ -552,9 +590,9 @@ function stopFalling() {
 }
 
 const SEASONS = {
-  halloween: { decor: PUMPKIN, footer: 'TRICK OR TREAT', webs: true },
+  halloween: { decor: PUMPKIN, footer: 'TRICK OR TREAT', corners: 'webs' },
   fall: { decor: LEAF, footer: 'GIVE THANKS', falling: 'leaves' },
-  christmas: { decor: TREE, footer: 'HAPPY HOLIDAYS', falling: 'snow' },
+  christmas: { decor: TREE, footer: 'HAPPY HOLIDAYS', falling: 'snow', corners: 'garland' },
 };
 const DEFAULT_FOOTER = 'PRESS START TO CONTINUE';
 
@@ -585,7 +623,7 @@ function applySeason() {
   $('footMsg').textContent = theme.footer || DEFAULT_FOOTER;
   const effects = config.effects !== false;
   startFalling(effects && theme.falling);
-  showWebs(effects && !!theme.webs);
+  showCorners(effects && theme.corners);
 }
 
 function tickClock() {
